@@ -9,7 +9,7 @@ from random import randint
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix= settings['PREFIX'], intents=discord.Intents.all())
-conn = sqlite3.connect("server.db") # или :memory:
+conn = sqlite3.connect("server.db")
 cursor = conn.cursor()
 
 # подключение к таблице
