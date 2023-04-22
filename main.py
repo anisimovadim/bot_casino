@@ -1,7 +1,7 @@
 import random
-import sqlite3 #модуль sqlite
-import discord #модуль discord api
-from discord.ext import commands #необходимый класс для обработки команд
+import sqlite3
+import discord
+from discord.ext import commands
 from config import settings
 from discord.ext.commands import cooldown, BucketType
 from random import randint
@@ -12,7 +12,7 @@ bot = commands.Bot(command_prefix= settings['PREFIX'], intents=discord.Intents.a
 conn = sqlite3.connect("server.db") # или :memory:
 cursor = conn.cursor()
 
-
+# подключение к таблице
 @bot.event
 async def on_ready():
     cursor.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -43,6 +43,7 @@ async def on_ready():
                 pass
     conn.commit()
     print('Bot connected')
+#Добавление нового или уже сущ. пользователя в таблицу
 @bot.event
 async def on_member_join(member):
     if cursor.execute(f"SELECT id FROM users WHERE id = {member.id}").fetchone() is None:
@@ -51,6 +52,7 @@ async def on_member_join(member):
     else:
         pass
 
+#создание команды на просмотр баланса пользователя
 @bot.command(aliases = ['$', 'balance'])
 async def __balance(ctx, member: discord.Member = None):
     if member is None:
@@ -63,6 +65,7 @@ async def __balance(ctx, member: discord.Member = None):
             description=f"""Баланс пользователя **{member}** составляет **{cursor.execute("SELECT cash FROM users WHERE id = {}".format(member.id)).fetchone()[0]} :pound:**"""
         ))
 
+#команда для Администраторов - выдача валюты пользователю
 @bot.command(aliases = ['award'])
 @commands.has_any_role("Administrator", "OWNER", "Curator")
 async def __award(ctx, member: discord.Member = None, amount: int = None):
@@ -84,6 +87,7 @@ async def __award(ctx, member: discord.Member = None, amount: int = None):
             conn.commit()
             await ctx.message.add_reaction('✅')
 
+#Команда для Администраторов - отнять валюту у пользователя
 @bot.command(aliases = ['take'])
 @commands.has_any_role("Administrator", "OWNER", "Curator")
 async def __take(ctx, member: discord.Member = None, amount = None):
@@ -109,6 +113,7 @@ async def __take(ctx, member: discord.Member = None, amount = None):
             conn.commit()
             await ctx.message.add_reaction('✅')
 
+#Команда на добавление ролей в магазин            
 @bot.command(aliases = ['addshop'])
 @commands.has_any_role("Administrator", "OWNER", "Curator")
 async def __addshop(ctx, role: discord.Role = None, cost: int = None):
@@ -130,6 +135,7 @@ async def __addshop(ctx, role: discord.Role = None, cost: int = None):
             conn.commit()
             await ctx.message.add_reaction('✅')
 
+#Команда на удаление роли из магазина            
 @bot.command(aliases = ['rshop'])
 @commands.has_any_role("Administrator", "OWNER", "Curator")
 async def __removeshop(ctx, role: discord.Role = None):
@@ -142,6 +148,7 @@ async def __removeshop(ctx, role: discord.Role = None):
         conn.commit()
         await ctx.message.add_reaction('✅')
 
+# Команда для просмотра списка ролей из магазина        
 @bot.command(aliases = ['shop'])
 async def __shop(ctx):
     embed = discord.Embed(title='Хайповый магазик ролей')
@@ -156,6 +163,7 @@ async def __shop(ctx):
             pass
     await ctx.send(embed=embed)
 
+# Команда для покупки роли    
 @bot.command(aliases = ['buy'])
 async def __buy(ctx, role: discord.Role = None):
     if role is None:
@@ -177,6 +185,7 @@ async def __buy(ctx, role: discord.Role = None):
             conn.commit()
             await ctx.message.add_reaction('✅')
 
+#Команда для просмотра статистики            
 @bot.command(aliases = ['top'])
 async def __top(ctx):
     embed = discord.Embed(title='Топ 10 богачей сервера')
@@ -192,6 +201,7 @@ async def __top(ctx):
     await ctx.send(embed = embed)
 
 
+# Команда на добавление работы в список работ    
 @bot.command(aliases = ['addwork'])
 async def __addwork(ctx, name: discord.Role = None, salary_min: int = None, salary_max: int = None):
     if name is None:
@@ -220,6 +230,7 @@ async def __addwork(ctx, name: discord.Role = None, salary_min: int = None, sala
             conn.commit()
             await ctx.message.add_reaction('✅')
 
+# Команда на просмотр списка работ            
 @bot.command(aliases = ['worklist'])
 async def __worklist(ctx):
     embed = discord.Embed(title='Список работ сервера')
@@ -235,6 +246,7 @@ async def __worklist(ctx):
     await ctx.send(embed=embed)
 
 
+#Команда для получение валюты посредством работы (ограниченная команда)    
 @bot.command(aliases = ['work'])
 @commands.cooldown(1, 3600, commands.BucketType.user)
 async def __work(ctx, name: discord.Role = None):
@@ -255,6 +267,7 @@ async def on_command_error(ctx, error):
             description=f'Для следующей смены осталось **{round(error.retry_after, 2)}** сек'
         ))
 
+# Команда на перевод валюты другому пользователю        
 @bot.command(aliases = ['transfer', 'tr'])
 async def __transfer(ctx, member:discord.Member = None, amount:int = None):
     if member is None:
